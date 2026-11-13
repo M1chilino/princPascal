@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Princípio de Pascal</title>
+<style>
+:root{
+  --blue:#0b5ea8; --blue2:#2f8cf0; --sky:#eaf4ff; --sky2:#d6e9fc; --ink:#0f2a43; --muted:#5b7188;
+  --orange:#ff7a1a; --orange2:#ffb066; --green:#16a34a; --green2:#dcfce7; --red:#e5384f; --red2:#ffe4e8;
+  --card:#ffffff; --line:#d3e4f6; --shadow:0 10px 30px rgba(11,94,168,.12);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+[hidden]{display:none!important}
+body{margin:0;font-family:"Segoe UI","Trebuchet MS",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);
+  background:linear-gradient(180deg,#eef6ff 0%,#ffffff 45%,#f3f9ff 100%);min-height:100vh;overflow-x:hidden}
+.bg{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+  background-image:linear-gradient(rgba(11,94,168,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(11,94,168,.045) 1px,transparent 1px);
+  background-size:38px 38px}
+.bg .gear{position:absolute;font-size:170px;opacity:.07;animation:spin 28s linear infinite}
+.bg .g1{left:-40px;top:90px}.bg .g2{right:-50px;bottom:40px;animation-direction:reverse;font-size:220px}
+.bg .g3{right:12%;top:-60px;font-size:120px;animation-duration:20s}
+.bub{position:absolute;bottom:-40px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff,rgba(47,140,240,.25));
+  border:1px solid rgba(47,140,240,.3);animation:rise linear infinite}
+@keyframes rise{to{transform:translateY(-115vh) translateX(30px);opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:14px clamp(14px,4vw,40px);background:rgba(255,255,255,.85);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:26px;color:#fff;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));box-shadow:0 6px 16px rgba(11,94,168,.35);animation:float 3s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-4px) rotate(-4deg)}}
+.brand h1{margin:0;font-size:clamp(20px,3.2vw,28px);letter-spacing:.2px;line-height:1.05;
+  background:linear-gradient(90deg,var(--blue),var(--blue2) 60%,var(--orange));-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand small{color:var(--muted);font-weight:600}
+.hud{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{background:var(--sky);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px;white-space:nowrap}
+.chip b{color:var(--blue)}
+.xpbar{width:90px;height:8px;border-radius:9px;background:#dbe8f5;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:6px}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--orange),#ffc14d);transition:width .8s}
+
+nav.stages{display:flex;gap:10px;justify-content:center;padding:14px 12px 0;flex-wrap:wrap}
+.tab{border:2px solid var(--line);background:#fff;border-radius:16px;padding:10px 18px;font:inherit;font-weight:800;color:var(--blue);
+  cursor:pointer;transition:.25s;display:flex;gap:8px;align-items:center;box-shadow:0 4px 12px rgba(11,94,168,.06)}
+.tab:hover{transform:translateY(-2px)}
+.tab.active{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(11,94,168,.3)}
+.tab.locked{color:#8aa0b6;background:#f1f6fb;cursor:not-allowed}
+.tab.done::after{content:"✔";color:var(--green);background:#fff;border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font-size:13px}
+.tab.pop{animation:pop .8s}
+@keyframes pop{0%{transform:scale(.8)}50%{transform:scale(1.15) rotate(-2deg)}100%{transform:scale(1)}}
+
+main{max-width:1120px;margin:0 auto;padding:18px clamp(12px,3vw,24px) 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:clamp(16px,3vw,28px);animation:in .5s both}
+@keyframes in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.card.shake{animation:shake .5s}
+@keyframes shake{20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
+
+.hero{text-align:center}
+.hero h2{font-size:clamp(28px,6vw,52px);margin:6px 0;line-height:1.05}
+.hero p{color:var(--muted);max-width:640px;margin:8px auto;font-size:17px}
+.namebox{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0}
+input[type=text],input.num{font:inherit;border:2px solid var(--line);border-radius:14px;padding:12px 14px;outline:none;transition:.2s;background:#fff;color:var(--ink)}
+input:focus{border-color:var(--blue2);box-shadow:0 0 0 4px rgba(47,140,240,.18)}
+.btn{font:inherit;font-weight:800;border:0;border-radius:14px;padding:12px 20px;cursor:pointer;transition:.2s;display:inline-flex;gap:8px;align-items:center;justify-content:center}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;box-shadow:0 8px 18px rgba(11,94,168,.3)}
+.btn.ok{background:linear-gradient(135deg,#12a150,#38d27a);color:#fff;box-shadow:0 8px 18px rgba(22,163,74,.3)}
+.btn.hint{background:#fff4e6;color:#b35400;border:2px solid var(--orange2)}
+.btn.ghost{background:#fff;border:2px solid var(--line);color:var(--muted)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+.btn.pulse{animation:pulse 1.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(22,163,74,.5)}100%{box-shadow:0 0 0 18px rgba(22,163,74,0)}}
+
+.stepper{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 16px}
+.dot{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:800;border:2px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;transition:.25s;font-size:15px}
+.dot.done{background:var(--green);border-color:var(--green);color:#fff}
+.dot.cur{background:var(--blue);border-color:var(--blue);color:#fff;transform:scale(1.18);box-shadow:0 6px 14px rgba(11,94,168,.35)}
+.dot.lock{opacity:.45;cursor:not-allowed}
+.dot.trophy{border-radius:14px;width:46px}
+
+.qhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.badge{background:var(--sky);color:var(--blue);font-weight:800;border-radius:999px;padding:5px 12px;font-size:13px}
+.badge.proj{background:linear-gradient(90deg,#fff1d6,#ffe0b8);color:#a14a00}
+.qhead h2{margin:0;font-size:clamp(20px,3.2vw,28px);flex:1;min-width:200px}
+.qstars{font-size:22px;letter-spacing:2px}
+.qgrid{display:grid;grid-template-columns:1.05fr 1fr;gap:22px;align-items:start}
+@media(max-width:900px){.qgrid{grid-template-columns:1fr}}
+.scene{background:#fff;border:2px dashed var(--line);border-radius:20px;overflow:hidden;position:sticky;top:96px}
+@media(max-width:900px){.scene{position:static}}
+.scene svg{display:block;width:100%;height:auto}
+.stmt{font-size:17px;line-height:1.5;margin:0 0 12px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.chips span{background:var(--sky);border:1px solid var(--line);padding:5px 11px;border-radius:10px;font-weight:700;font-size:14px}
+.vars{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:480px){.vars{grid-template-columns:1fr}}
+.vbox{border:2px solid var(--line);border-radius:16px;padding:10px 12px;background:#f7fbff}
+.vbox label,.fld label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin-bottom:5px}
+.vbox .val{font-size:22px;font-weight:800;color:var(--blue);display:flex;align-items:center;gap:6px}
+.vbox .val small{font-size:13px;color:var(--muted)}
+.vbox.locked::after{content:"🔒";float:right;margin-top:-26px;font-size:14px;opacity:.55}
+.vbox.unk{border-color:var(--orange);background:#fff8f0;animation:glow 1.8s infinite}
+@keyframes glow{50%{box-shadow:0 0 0 6px rgba(255,122,26,.18)}}
+.fld{margin-bottom:10px}
+.inrow{display:flex;align-items:center;gap:8px}
+input.num{width:100%;font-size:20px;font-weight:800;padding:10px 12px}
+.unit{font-weight:800;color:var(--muted);white-space:nowrap}
+.inrow input.ok{border-color:var(--green);background:var(--green2)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 8px}
+.fb{min-height:24px;font-weight:800;margin:6px 0}
+.fb.bad{color:var(--red);animation:shake .5s}
+.fb.good{color:var(--green)}
+.hints{display:grid;gap:8px}
+.hbub{background:#fff7ec;border-left:5px solid var(--orange);border-radius:12px;padding:10px 12px;font-size:15px;animation:in .4s both}
+.sol{background:var(--green2);border:2px solid #9be2b6;border-radius:16px;padding:12px 16px;margin-top:10px;animation:in .5s both}
+.sol h4{margin:0 0 6px;color:#0f7a3a}
+.sol p{margin:4px 0;font-size:15px}
+.gain{display:flex;gap:10px;align-items:center;font-weight:800;margin:8px 0}
+.gain .xp{background:linear-gradient(90deg,var(--orange),#ffc14d);color:#fff;padding:4px 12px;border-radius:999px;animation:pop .7s}
+
+.formulas{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0}
+.fcard{border:2px solid var(--line);border-radius:18px;padding:14px;background:linear-gradient(180deg,#fff,var(--sky));text-align:center}
+.fcard .f{font-size:22px;font-weight:800;color:var(--blue);margin:6px 0}
+.fcard small{color:var(--muted);font-weight:600}
+.intro-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:center}
+@media(max-width:900px){.intro-grid{grid-template-columns:1fr}}
+.intro h2{font-size:clamp(24px,4vw,36px);margin:0 0 8px}
+
+.overlay{position:fixed;inset:0;background:rgba(15,42,67,.55);backdrop-filter:blur(4px);z-index:50;display:grid;place-items:center;padding:16px;animation:in .3s both}
+.modal{background:#fff;border-radius:28px;padding:30px;max-width:520px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.35);animation:pop .7s}
+.modal .big{font-size:78px;animation:float 2s infinite}
+.modal h3{font-size:28px;margin:6px 0}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;z-index:60;animation:in .3s both;max-width:92vw;text-align:center}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:70}
+.final .trophy{font-size:96px;animation:float 2.4s infinite}
+.final .cert{border:4px double var(--blue);border-radius:20px;padding:20px;margin:16px auto;max-width:560px;background:linear-gradient(180deg,#fff,var(--sky))}
+.sumtable{width:100%;max-width:560px;margin:10px auto;border-collapse:collapse}
+.sumtable td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left}
+.sumtable td:last-child{text-align:right;font-weight:800}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:0 0 26px}
+.needle{transition:transform .3s}
+@media print{.bg,header.top,nav.stages,.actions,footer,.noprint{display:none!important}.card{box-shadow:none;border:0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<div class="bg" id="bg"><span class="gear g1">⚙️</span><span class="gear g2">⚙️</span><span class="gear g3">⚙️</span></div>
+<header class="top">
+  <div class="brand"><div class="logo">💨</div>
+    <div><h1>Princípio de Pascal</h1><small>Pneumática · Ar comprimido em ação</small></div></div>
+  <div class="hud" id="hud"></div>
+</header>
+<nav class="stages" id="tabs"></nav>
+<main id="app"></main>
+<footer>Atividade gamificada · Eletropneumática &amp; Eletro-hidráulica · SENAI</footer>
+<canvas id="confetti"></canvas>
+
+<script>
+(function(){
+'use strict';
+const PI=Math.PI;
+const $=(s,r=document)=>r.querySelector(s);
+const SAVE='pascal_pneumatica_v1';
+const fmt=(n,d=2)=>{const f=Math.pow(10,d);return (Math.round(n*f)/f).toLocaleString('pt-BR',{maximumFractionDigits:d})};
+const parseNum=s=>{s=String(s).trim().replace(/\s/g,'');if(!s)return NaN;
+  if(s.indexOf(',')>-1)s=s.replace(/\./g,'').replace(',','.');return parseFloat(s)};
+const close=(v,a)=>Math.abs(v-a)<=Math.max(Math.abs(a)*0.015,0.01);
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+/* ================= DADOS: ETAPA 1 (Pascal em pneumática) ================= */
+const V1={F1:{lab:'Força de entrada (F₁)',un:'kgf'},A1:{lab:'Área de entrada (A₁)',un:'cm²'},
+          F2:{lab:'Força de saída (F₂)',un:'kgf'},A2:{lab:'Área de saída (A₂)',un:'cm²'}};
+function mk1(o){
+  const side=(o.unk==='F2'||o.unk==='A2')?1:2;
+  const Pv=side===1?o.F1/o.A1:o.F2/o.A2;
+  const sl=side===1?['F₁','A₁',o.F1,o.A1]:['F₂','A₂',o.F2,o.A2];
+  const sol=[`Pressão do sistema: P = ${sl[0]} ÷ ${sl[1]} = ${fmt(sl[2])} ÷ ${fmt(sl[3])} = <b>${fmt(Pv)} kgf/cm²</b>`];
+  const e={F2:`F₂ = P × A₂ = ${fmt(Pv)} × ${fmt(o.A2)} = <b>${fmt(o.F2)} kgf</b>`,
+           F1:`F₁ = P × A₁ = ${fmt(Pv)} × ${fmt(o.A1)} = <b>${fmt(o.F1)} kgf</b>`,
+           A2:`A₂ = F₂ ÷ P = ${fmt(o.F2)} ÷ ${fmt(Pv)} = <b>${fmt(o.A2)} cm²</b>`,
+           A1:`A₁ = F₁ ÷ P = ${fmt(o.F1)} ÷ ${fmt(Pv)} = <b>${fmt(o.A1)} cm²</b>`};
+  sol.push(e[o.unk]);
+  const isF=o.unk[0]==='F';
+  return {stage:1,base:100,title:o.title,icon:o.icon,text:o.text,scene:{F1:o.F1,A1:o.A1,F2:o.F2,A2:o.A2,P:Pv,load:o.load,unk:[o.unk]},
+    boxes:['F1','A1','F2','A2'].map(k=>({key:k,val:o[k],unk:k===o.unk,...V1[k]})),
+    pfield:{key:'P',label:'Pressão do sistema (P)',unit:'kgf/cm²',ans:Pv},
+    fields:[{key:'P',ans:Pv},{key:o.unk,ans:o[o.unk]}],
+    hints:[
+      'Pascal: a pressão aplicada ao ar confinado se transmite igualmente para todas as partes. Então, a pressão na entrada é igual à pressão na saída.',
+      `Comece pelo lado ${side===1?'da entrada':'da saída'}, onde você conhece a força e a área: P = F ÷ A.`,
+      `Dica final: a pressão do sistema é ${fmt(Pv)} kgf/cm². Agora use ${isF?'F = P × A':'A = F ÷ P'} no lado que falta.`],
+    sol};
+}
+const Q1=[
+ mk1({title:'Elevador pneumático de carros',icon:'🚗',load:'🚗',F1:25,A1:5,F2:1000,A2:200,unk:'F2',
+  text:'Numa oficina mecânica, o ar comprimido empurra o êmbolo menor do elevador com 25 kgf (área de 5 cm²). O êmbolo maior, que sustenta o veículo, tem 200 cm². Calcule a pressão do sistema e a força de saída.'}),
+ mk1({title:'Prensa pneumática de rebitagem',icon:'🔩',load:'🔩',F1:12,A1:3,F2:180,A2:45,unk:'F2',
+  text:'Uma prensa de rebitagem usa um intensificador pneumático. O êmbolo de entrada recebe 12 kgf em 3 cm² e o êmbolo de saída tem 45 cm². Qual a pressão do sistema e a força de saída aplicada no rebite?'}),
+ mk1({title:'Grampo de fixação para soldagem',icon:'🛠️',load:'🛠️',F1:8,A1:4,F2:50,A2:25,unk:'A2',
+  text:'Num posto de solda, um grampo pneumático precisa prender a peça com 50 kgf. A entrada recebe 8 kgf numa área de 4 cm². Qual deve ser a área do êmbolo de saída para obter essa força?'}),
+ mk1({title:'Macaco pneumático de caminhão',icon:'🚚',load:'🚚',F1:30,A1:5,F2:600,A2:100,unk:'F1',
+  text:'Um macaco pneumático de borracharia tem êmbolo de saída de 100 cm² e deve levantar 600 kgf. A área do êmbolo de entrada é 5 cm². Que força de entrada é necessária?'}),
+ mk1({title:'Portão industrial pneumático',icon:'🚪',load:'🚪',F1:24,A1:3,F2:480,A2:60,unk:'A1',
+  text:'O portão de um galpão é erguido por um sistema pneumático: saída de 60 cm² entregando 480 kgf. A força aplicada na entrada é de 24 kgf. Qual a área do êmbolo de entrada?'}),
+ mk1({title:'Mesa elevatória da linha de montagem',icon:'📦',load:'📦',F1:40,A1:8,F2:600,A2:120,unk:'F2',
+  text:'Uma mesa elevatória sobe caixas de componentes até a linha de montagem. A entrada recebe 40 kgf em 8 cm² e a saída tem 120 cm². Qual é a força disponível para erguer a mesa?'}),
+ mk1({title:'Estampagem de chapas',icon:'⚙️',load:'⚙️',F1:18,A1:6,F2:270,A2:90,unk:'A2',
+  text:'Uma estampadora precisa de 270 kgf para marcar uma chapa. A entrada aplica 18 kgf em 6 cm². Qual deve ser a área do êmbolo de saída?'}),
+ mk1({title:'Carregamento de contêiner',icon:'🏗️',load:'📦',F1:80,A1:10,F2:1200,A2:150,unk:'F1',
+  text:'Uma plataforma pneumática eleva engradados até a carroceria de um caminhão. A saída tem 150 cm² e precisa fornecer 1.200 kgf. A entrada tem 10 cm². Qual a força de entrada necessária?'}),
+ {stage:1,base:300,project:true,title:'Projeto: elevador pneumático de caminhões',icon:'🏆',
+  text:'Você é o técnico responsável pelo novo elevador pneumático da oficina da empresa. O caminhão pesa <b>2.400 kgf</b> e o êmbolo de saída tem <b>300 cm²</b>. O êmbolo de entrada tem <b>12 cm²</b>. Responda os itens abaixo.',
+  scene:{F1:96,A1:12,F2:2400,A2:300,P:8,load:'🚚',unk:['F1']},
+  fields:[
+   {key:'a',label:'a) Pressão necessária no sistema',unit:'kgf/cm²',ans:8},
+   {key:'b',label:'b) Força de entrada necessária (F₁)',unit:'kgf',ans:96},
+   {key:'c',label:'c) Se o compressor só entrega 6 kgf/cm², qual a área mínima do êmbolo de saída para erguer os 2.400 kgf?',unit:'cm²',ans:400},
+   {key:'d',label:'d) Com 6 kgf/cm² e o operador limitado a 60 kgf de força, qual deve ser a área do êmbolo de entrada?',unit:'cm²',ans:10}],
+  hints:['Comece pela pressão usando o lado que você conhece por completo (carga e área de saída): P = F ÷ A.',
+   'Com a pressão, a força de entrada vem de F = P × A₁. Nos itens (c) e (d) a pressão muda: use A = F ÷ P.',
+   'Dica final: no item (a) a pressão é 8 kgf/cm². Nos itens (c) e (d), use P = 6 kgf/cm² e não misture as unidades.'],
+  sol:['a) P = 2400 ÷ 300 = <b>8 kgf/cm²</b>','b) F₁ = 8 × 12 = <b>96 kgf</b>','c) A₂ = 2400 ÷ 6 = <b>400 cm²</b>','d) A₁ = 60 ÷ 6 = <b>10 cm²</b>']}
+];
+
+/* ================= DADOS: ETAPA 2 (cilindros pneumáticos) ================= */
+const area1=D=>PI*Math.pow(D/10,2)/4;                  // D em mm -> A em cm²
+const area2=(D,d)=>area1(D)-area1(d);
+function mk2(o){
+  const A1=area1(o.D), A2=o.d?area2(o.D,o.d):null, P=o.P;
+  const f=[],sol=[],hints=[];
+  const conv=`D = ${o.D} mm = ${fmt(o.D/10)} cm`+(o.d?` &nbsp;|&nbsp; d = ${o.d} mm = ${fmt(o.d/10)} cm`:'');
+  sol.push('Converta mm para cm: '+conv);
+  const sa=`Área do êmbolo (avanço): A₁ = π·D²/4 = π·${fmt(o.D/10)}²/4 = <b>${fmt(A1)} cm²</b>`;
+  const sr=o.d?`Área da coroa (retorno): A₂ = π·(D²−d²)/4 = π·(${fmt(o.D/10)}²−${fmt(o.d/10)}²)/4 = <b>${fmt(A2)} cm²</b>`:'';
+  if(o.kind==='adv'){
+    f.push({key:'Fa',label:'Força de avanço (empurrar)',unit:'kgf',ans:P*A1});
+    sol.push(sa,`F = P × A₁ = ${fmt(P)} × ${fmt(A1)} = <b>${fmt(P*A1)} kgf</b>`);
+    hints.push('No avanço (empurrar) o ar age sobre a área total do êmbolo, um círculo inteiro.',
+      'A = π·D²/4. Cuidado: converta o diâmetro de mm para cm (÷10) para usar kgf/cm².',
+      `Dica final: a área do êmbolo é ${fmt(A1)} cm². Agora use F = P × A.`);
+  }else if(o.kind==='ret'){
+    f.push({key:'Fr',label:'Força de retorno (puxar)',unit:'kgf',ans:P*A2});
+    sol.push(sr,`F = P × A₂ = ${fmt(P)} × ${fmt(A2)} = <b>${fmt(P*A2)} kgf</b>`);
+    hints.push('No retorno (puxar) a haste ocupa espaço: o ar age só na área da coroa (êmbolo menos haste).',
+      'A₂ = π·(D² − d²)/4, com D e d em cm (mm ÷ 10).',
+      `Dica final: a área útil no retorno é ${fmt(A2)} cm². Agora use F = P × A.`);
+  }else if(o.kind==='both'){
+    f.push({key:'Fa',label:'Força de avanço (empurrar)',unit:'kgf',ans:P*A1},{key:'Fr',label:'Força de retorno (puxar)',unit:'kgf',ans:P*A2});
+    sol.push(sa,`F avanço = P × A₁ = ${fmt(P)} × ${fmt(A1)} = <b>${fmt(P*A1)} kgf</b>`,sr,`F retorno = P × A₂ = ${fmt(P)} × ${fmt(A2)} = <b>${fmt(P*A2)} kgf</b>`);
+    hints.push('Avanço e retorno usam áreas diferentes: no retorno a haste "rouba" área do êmbolo.',
+      'Avanço: A₁ = π·D²/4. Retorno: A₂ = π·(D² − d²)/4. Converta mm → cm antes.',
+      `Dica final: A₁ = ${fmt(A1)} cm² e A₂ = ${fmt(A2)} cm². Agora F = P × A para cada uma.`);
+  }else{ // press
+    f.push({key:'Pa',label:'Pressão mínima para empurrar',unit:'bar',ans:o.F/A1},{key:'Pr',label:'Pressão mínima para puxar',unit:'bar',ans:o.F/A2});
+    sol.push(sa,sr,`P avanço = F ÷ A₁ = ${fmt(o.F)} ÷ ${fmt(A1)} = <b>${fmt(o.F/A1)} bar</b>`,`P retorno = F ÷ A₂ = ${fmt(o.F)} ÷ ${fmt(A2)} = <b>${fmt(o.F/A2)} bar</b>`);
+    hints.push('Aqui a força é dada e a pressão é a incógnita: P = F ÷ A. Lembre que 1 bar ≈ 1 kgf/cm².',
+      'Para empurrar use A₁ = π·D²/4; para puxar use A₂ = π·(D² − d²)/4 (cm).',
+      `Dica final: A₁ = ${fmt(A1)} cm² e A₂ = ${fmt(A2)} cm². Agora divida a força por cada área.`);
+  }
+  const chips=[`Ø êmbolo: ${o.D} mm`].concat(o.d?[`Ø haste: ${o.d} mm`]:[]).concat(o.F?[`Carga: ${o.F} kgf`]:[]).concat(o.P?[`Pressão: ${o.Pl}`]:[]);
+  return {stage:2,base:100,title:o.title,icon:o.icon,text:o.text,chips,fields:f,hints,sol,
+    scene:{kind:o.kind==='press'?'both':o.kind,D:o.D,d:o.d,P:o.P||null,F:o.F||null,load:o.load,A1,A2,
+      ans:{Fa:(o.kind==='adv'||o.kind==='both')?P*A1:null,Fr:(o.kind==='ret'||o.kind==='both')?P*A2:null,Pa:o.kind==='press'?o.F/A1:null,Pr:o.kind==='press'?o.F/A2:null}}};
+}
+const Q2=[
+ mk2({title:'Empurrador de caixas na esteira',icon:'📦',load:'📦',kind:'adv',D:50,P:6,Pl:'6 bar',
+  text:'Numa linha de embalagem, um cilindro pneumático de êmbolo Ø50 mm empurra as caixas para a esteira de seleção. A rede de ar comprimido trabalha com 6 bar. Qual a força de avanço do cilindro?'}),
+ mk2({title:'Rebitadeira pneumática',icon:'🔩',load:'🔩',kind:'adv',D:32,P:6,Pl:'6 bar',
+  text:'Uma rebitadeira usa um cilindro de Ø32 mm para pressionar o rebite contra a chapa. A pressão da rede é de 6 bar. Calcule a força de avanço.'}),
+ mk2({title:'Trava de porta da cabine de pintura',icon:'🚪',load:'🚪',kind:'adv',D:25,P:8,Pl:'8 atm',
+  text:'A trava da porta de uma cabine de pintura é acionada por um cilindro de Ø25 mm. O manômetro marca 8 atm. Calcule a força de avanço (lembre: 1 atm ≈ 1 bar ≈ 1 kgf/cm²).'}),
+ mk2({title:'Alimentador de chapas',icon:'🧱',load:'🧱',kind:'ret',D:50,d:20,P:6,Pl:'6 bar',
+  text:'Um cilindro Ø50 mm com haste Ø20 mm puxa a chapa de volta ao magazine da estampadora ao recuar. A rede trabalha com 6 bar. Qual a força de retorno?'}),
+ mk2({title:'Grampo da bancada de solda',icon:'🛠️',load:'🛠️',kind:'ret',D:80,d:25,P:6,Pl:'6 bar',
+  text:'Para soltar a peça soldada, o cilindro do grampo recua puxando a garra. Ele tem êmbolo Ø80 mm, haste Ø25 mm e trabalha com 6 bar. Calcule a força de retorno.'}),
+ mk2({title:'Dobradora de tubos',icon:'🔧',load:'🔧',kind:'both',D:40,d:16,P:6,Pl:'6 bar',
+  text:'Uma dobradora de tubos usa um cilindro Ø40 mm com haste Ø16 mm, alimentado com 6 bar. Calcule a força de avanço (dobrar) e a de retorno (voltar).'}),
+ mk2({title:'Prensa de rebitagem pesada',icon:'🏭',load:'⚙️',kind:'both',D:100,d:25,P:8,Pl:'8 bar',
+  text:'Uma prensa de rebitagem usa um cilindro Ø100 mm com haste Ø25 mm e pressão de 8 bar. Calcule as forças de avanço e de retorno.'}),
+ mk2({title:'Dimensionando o compressor',icon:'📐',load:'📦',kind:'press',D:63,d:20,F:150,
+  text:'O cilindro Ø63 mm com haste Ø20 mm precisa empurrar e depois puxar uma carga de 150 kgf. Que pressão mínima (em bar) a rede deve fornecer em cada sentido?'}),
+ {stage:2,base:300,project:true,title:'Projeto: célula de soldagem robotizada',icon:'🏆',
+  text:'Na célula de soldagem, um cilindro pneumático <b>Ø63 mm</b> com haste <b>Ø20 mm</b> prende a peça na rede de <b>6 bar</b>. Responda os itens (use π ≈ 3,14):',
+  chips:['Ø êmbolo: 63 mm','Ø haste: 20 mm','Rede: 6 bar'],
+  scene:{kind:'both',D:63,d:20,P:6,F:null,load:'🛠️',A1:area1(63),A2:area2(63,20),ans:{Fa:6*area1(63),Fr:6*area2(63,20),Pa:null,Pr:null}},
+  fields:[
+   {key:'a',label:'a) Força de avanço (grampear a peça)',unit:'kgf',ans:6*area1(63)},
+   {key:'b',label:'b) Força de retorno (soltar a peça)',unit:'kgf',ans:6*area2(63,20)},
+   {key:'c',label:'c) A nova peça exige 250 kgf de fixação a 6 bar. Qual o diâmetro mínimo do êmbolo? (D = √(4·A ÷ π))',unit:'mm',ans:Math.sqrt(4*(250/6)/PI)*10},
+   {key:'d',label:'d) Escolhido o cilindro comercial Ø80 mm, em que pressão regular a rede para obter exatamente 250 kgf?',unit:'bar',ans:250/area1(80)}],
+  hints:['(a) e (b) têm áreas diferentes: o avanço usa o êmbolo inteiro; o retorno desconta a haste.',
+   '(c) Primeiro ache a área necessária: A = F ÷ P. Depois use D = √(4·A ÷ π) e converta cm → mm.',
+   '(d) Com Ø80 mm, A = π·8²/4 ≈ 50,27 cm². Agora isole a pressão: P = F ÷ A.'],
+  sol:[`a) A₁ = π·6,3²/4 = ${fmt(area1(63))} cm² → F = 6 × ${fmt(area1(63))} = <b>${fmt(6*area1(63))} kgf</b>`,
+   `b) A₂ = π·(6,3²−2²)/4 = ${fmt(area2(63,20))} cm² → F = 6 × ${fmt(area2(63,20))} = <b>${fmt(6*area2(63,20))} kgf</b>`,
+   `c) A = 250 ÷ 6 = ${fmt(250/6)} cm² → D = √(4·${fmt(250/6)} ÷ π) = ${fmt(Math.sqrt(4*(250/6)/PI))} cm = <b>${fmt(Math.sqrt(4*(250/6)/PI)*10)} mm</b>`,
+   `d) A(Ø80) = ${fmt(area1(80))} cm² → P = 250 ÷ ${fmt(area1(80))} = <b>${fmt(250/area1(80))} bar</b>`]}
+];
+const QS={1:Q1,2:Q2};
+Q1.forEach((q,i)=>{q.id='1-'+i;q.n=i;});Q2.forEach((q,i)=>{q.id='2-'+i;q.n=i;});
+
+/* ================= ESTADO ================= */
+let P={name:'',xp:0,done:{},ui:{stage:1,idx:0,view:'welcome'},seen:{1:false,2:false}};
+function load(){try{const r=localStorage.getItem(SAVE);if(r){const o=JSON.parse(r);P=Object.assign(P,o);}}catch(e){}}
+function save(){try{localStorage.setItem(SAVE,JSON.stringify(P));}catch(e){}}
+const stageDone=s=>QS[s].every(q=>P.done[q.id]);
+const firstUndone=s=>{const i=QS[s].findIndex(q=>!P.done[q.id]);return i<0?QS[s].length-1:i};
+const stage2Open=()=>stageDone(1);
+const LEVELS=[[0,'Aprendiz'],[400,'Operador'],[900,'Técnico'],[1500,'Especialista'],[2000,'Mestre da Pneumática']];
+const level=xp=>{let l=LEVELS[0],n=null;for(let i=0;i<LEVELS.length;i++){if(xp>=LEVELS[i][0]){l=LEVELS[i];n=LEVELS[i+1]||null;}}return {l,n}};
+const stars=n=>'⭐'.repeat(n)+'☆'.repeat(3-n);
+let R={hints:0,errors:0,solved:false};
+
+/* ================= ANIMAÇÕES (loop único) ================= */
+let cur=null;
+function loop(ts){if(cur)cur.update(ts/1000);requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+const svgNS='http://www.w3.org/2000/svg';
+
+/* ---- Cena 1: Pascal (tubo em U com ar comprimido) ---- */
+function Scene1(host,cfg){
+  const wR=170,r=Math.sqrt(cfg.A1/cfg.A2),wL=Math.max(40,Math.min(110,wR*r));
+  const xL0=70,xL1=xL0+wL,cxL=(xL0+xL1)/2,xR0=385,xR1=555,cxR=(xR0+xR1)/2,top=112,floor=272,chTop=238,chMid=255;
+  const gx=(xL1+xR0)/2,gy=186;
+  const cav=`M${xL0},${top} L${xL0},${floor} L${xR1},${floor} L${xR1},${top} L${xR0},${top} L${xR0},${chTop} L${xL1},${chTop} L${xL1},${top} Z`;
+  const unk=cfg.unk||[];
+  const lab=(k,t,u)=>unk.indexOf(k)>-1?`${t} = ?`:`${t} = ${fmt(cfg[k])} ${u}`;
+  host.innerHTML=`<svg viewBox="0 0 640 330" role="img" aria-label="Sistema pneumático de Pascal">
+   <defs><linearGradient id="air" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4eaff"/><stop offset="1" stop-color="#86c0ff"/></linearGradient></defs>
+   <path d="${cav}" fill="url(#air)"/>
+   <rect class="atL" x="${xL0}" y="${top}" width="${wL}" height="40" fill="#fff"/>
+   <rect class="atR" x="${xR0}" y="${top}" width="${xR1-xR0}" height="40" fill="#fff"/>
+   <g class="ptc"></g>
+   <g class="gL">
+     <rect x="${xL0+3}" y="150" width="${wL-6}" height="16" rx="3" fill="#55657a"/>
+     <rect x="${cxL-5}" y="86" width="10" height="64" fill="#8795a6"/>
+     <rect x="${cxL-24}" y="78" width="48" height="10" rx="5" fill="#ff7a1a"/>
+     <path d="M${cxL-9},46 H${cxL+9} V66 H${cxL+16} L${cxL},78 L${cxL-16},66 H${cxL-9} Z" fill="#e5384f"/>
+   </g>
+   <g class="gR">
+     <rect x="${xR0+3}" y="150" width="${wR-6}" height="16" rx="3" fill="#55657a"/>
+     <path d="M${cxR-62},150 L${cxR-38},130 H${cxR+38} L${cxR+62},150 Z" fill="#8795a6"/>
+     <text class="load" x="${cxR}" y="128" font-size="60" text-anchor="middle">${cfg.load}</text>
+     <path d="M${cxR+92},138 V96 H${cxR+82} L${cxR+98},72 L${cxR+114},96 H${cxR+104} V138 Z" fill="#e5384f"/>
+   </g>
+   <path d="${cav}" fill="none" stroke="#34495e" stroke-width="6" stroke-linejoin="round"/>
+   <text x="${cxL}" y="18" text-anchor="middle" font-weight="800" font-size="16" fill="#0f2a43" class="tF1">${lab('F1','F₁','kgf')}</text>
+   <text x="${cxL}" y="34" text-anchor="middle" font-size="11" font-weight="700" fill="#5b7188">ENTRADA DA FORÇA</text>
+   <text x="${cxR}" y="18" text-anchor="middle" font-weight="800" font-size="16" fill="#0f2a43" class="tF2">${lab('F2','F₂','kgf')}</text>
+   <text x="${cxR}" y="34" text-anchor="middle" font-size="11" font-weight="700" fill="#5b7188">SAÍDA DA FORÇA</text>
+   <text x="${cxL}" y="306" text-anchor="middle" font-weight="800" font-size="15" fill="#0b5ea8" class="tA1">${lab('A1','A₁','cm²')}</text>
+   <text x="${cxR}" y="306" text-anchor="middle" font-weight="800" font-size="15" fill="#0b5ea8" class="tA2">${lab('A2','A₂','cm²')}</text>
+   <line x1="${gx}" y1="${gy+30}" x2="${gx}" y2="${chTop}" stroke="#34495e" stroke-width="6"/>
+   <circle cx="${gx}" cy="${gy}" r="30" fill="#fff" stroke="#34495e" stroke-width="5"/>
+   <g class="needle" style="transform-origin:${gx}px ${gy}px"><line x1="${gx}" y1="${gy}" x2="${gx}" y2="${gy-24}" stroke="#e5384f" stroke-width="3" stroke-linecap="round"/></g>
+   <circle cx="${gx}" cy="${gy}" r="4" fill="#34495e"/>
+   <text x="${gx}" y="${gy-40}" text-anchor="middle" font-weight="800" font-size="14" fill="#34495e" class="tP">${unk.length&&cfg.hideP?'P = ?':'P = ?'}</text>
+  </svg>`;
+  const g=s=>host.querySelector(s),gL=g('.gL'),gR=g('.gR'),atL=g('.atL'),atR=g('.atR'),ptc=g('.ptc'),nd=g('.needle');
+  const N=30,pts=[];
+  for(let i=0;i<N;i++){const c=document.createElementNS(svgNS,'circle');c.setAttribute('r','3.2');c.setAttribute('fill','#0b5ea8');c.setAttribute('opacity','.55');ptc.appendChild(c);pts.push({c,s:i/N,o:Math.random()*2-1,v:.8+Math.random()*.5});}
+  let solved=false,mode=0,tmode=0;
+  const S={
+    solve(v){solved=true;
+      g('.tF1').textContent=`F₁ = ${fmt(v.F1)} kgf`;g('.tF2').textContent=`F₂ = ${fmt(v.F2)} kgf`;
+      g('.tA1').textContent=`A₁ = ${fmt(v.A1)} cm²`;g('.tA2').textContent=`A₂ = ${fmt(v.A2)} cm²`;
+      g('.tP').textContent=`P = ${fmt(v.P)} kgf/cm²`;g('.tP').setAttribute('fill','#16a34a');
+      host.querySelectorAll('text[class^=t]').forEach(t=>{if(/F|A/.test(t.getAttribute('class')))t.setAttribute('fill','#16a34a')});
+    },
+    update(t){
+      const u=solved?(1-Math.cos(t*0.9))/2:(0.5+0.5*Math.sin(t*1.3))*0.1;
+      const dl=46*u,dr=dl*wL/wR,yL=150+dl,yR=150-dr;
+      gL.setAttribute('transform',`translate(0,${dl})`);gR.setAttribute('transform',`translate(0,${-dr})`);
+      atL.setAttribute('height',Math.max(0,yL-top));atR.setAttribute('height',Math.max(0,yR-top));
+      const topL=yL+16+8,topR=yR+16+8,l1=chMid-topL,l2=cxR-cxL,l3=chMid-topR,tot=l1+l2+l3,sp=solved?0.16:0.06;
+      pts.forEach(p=>{p.s=(p.s+sp*p.v*0.016)%1;const d=p.s*tot;let x,y;
+        if(d<l1){x=cxL+p.o*(wL/2-9);y=topL+d;}
+        else if(d<l1+l2){x=cxL+(d-l1);y=chMid+p.o*9;}
+        else{x=cxR+p.o*(wR/2-9);y=chMid-(d-l1-l2);}
+        p.c.setAttribute('cx',x.toFixed(1));p.c.setAttribute('cy',y.toFixed(1));});
+      const frac=solved?Math.min(1,cfg.P/10):0.45+0.04*Math.sin(t*3);
+      nd.style.transform=`rotate(${-70+140*frac}deg)`;
+    }
+  };
+  cur=S;return S;
+}
+
+/* ---- Cena 2: Cilindro pneumático (avanço / retorno) ---- */
+function Scene2(host,cfg){
+  const x0=90,x1=330,cy=168,fl=262,hb=28+cfg.D*0.4,hr=cfg.d?hb*cfg.d/cfg.D:hb*0.3,xpMin=x0+8,stroke=190,rodL=250;
+  const loadTxt=cfg.F?`${fmt(cfg.F)} kgf`:'';
+  host.innerHTML=`<svg viewBox="0 0 640 300" role="img" aria-label="Cilindro pneumático">
+   <rect x="0" y="${fl}" width="640" height="10" fill="#cfdbe8"/>
+   <rect x="${x0+22}" y="${cy+hb}" width="18" height="${fl-cy-hb}" fill="#9fb0c3"/><rect x="${x1-40}" y="${cy+hb}" width="18" height="${fl-cy-hb}" fill="#9fb0c3"/>
+   <rect x="${x0}" y="${cy-hb}" width="${x1-x0}" height="${2*hb}" rx="6" fill="#fff"/>
+   <rect class="rear" y="${cy-hb+4}" height="${2*hb-8}"/><rect class="front" y="${cy-hb+4}" height="${2*hb-8}"/>
+   <g class="ptc"></g>
+   <rect class="pist" y="${cy-hb+3}" width="14" height="${2*hb-6}" rx="3" fill="#55657a"/>
+   <rect x="${x0}" y="${cy-hb}" width="${x1-x0}" height="${2*hb}" rx="6" fill="none" stroke="#34495e" stroke-width="5"/>
+   <rect x="${x0-8}" y="${cy-hb-2}" width="12" height="${2*hb+4}" rx="3" fill="#34495e"/>
+   <rect x="${x1-4}" y="${cy-hb-2}" width="12" height="${2*hb+4}" rx="3" fill="#34495e"/>
+   <g><rect x="${x0+20}" y="${cy-hb-30}" width="12" height="30" fill="#7b8ea3"/><rect x="${x1-32}" y="${cy-hb-30}" width="12" height="30" fill="#7b8ea3"/></g>
+   <g class="pa rp"><path d="M-9,0 H9 L0,13 Z"/></g><g class="pa fp"><path d="M-9,0 H9 L0,13 Z"/></g>
+   <text class="rt" y="${cy-hb-70}" x="${x0+10}" text-anchor="start" font-size="11" font-weight="800"></text>
+   <text class="ft" y="${cy-hb-70}" x="${x1-10}" text-anchor="end" font-size="11" font-weight="800"></text>
+   <rect class="rod" y="${cy-hr}" height="${2*hr}" fill="#a9b6c4" stroke="#5b6b7c" stroke-width="2"/>
+   <rect x="${x1+10}" y="${cy+50}" width="626" height="7" fill="#9fb0c3"/><rect x="${x1+60}" y="${cy+57}" width="14" height="${fl-cy-57}" fill="#9fb0c3"/><rect x="606" y="${cy+57}" width="14" height="${fl-cy-57}" fill="#9fb0c3"/>
+   <g class="ld"><rect x="-14" y="${cy-hr-5}" width="16" height="${2*hr+10}" rx="3" fill="#55657a"/>
+     <rect x="0" y="${cy-38}" width="58" height="76" rx="8" fill="#ffe2bd" stroke="#c77a1e" stroke-width="3"/>
+     <text class="lde" x="29" y="${cy+2}" font-size="30" text-anchor="middle">${cfg.load}</text>
+     <text x="29" y="${cy+28}" font-size="12" font-weight="800" text-anchor="middle" fill="#8a4a00">${loadTxt}</text>
+     <circle cx="14" cy="${cy+44}" r="6" fill="#55657a"/><circle cx="44" cy="${cy+44}" r="6" fill="#55657a"/></g>
+   <line x1="70" y1="${cy-hb}" x2="70" y2="${cy+hb}" stroke="#0b5ea8" stroke-width="2"/>
+   <line x1="64" y1="${cy-hb}" x2="76" y2="${cy-hb}" stroke="#0b5ea8" stroke-width="2"/><line x1="64" y1="${cy+hb}" x2="76" y2="${cy+hb}" stroke="#0b5ea8" stroke-width="2"/>
+   <text transform="translate(58 ${cy}) rotate(-90)" text-anchor="middle" font-size="13" font-weight="800" fill="#0b5ea8">Ø${cfg.D} mm</text>
+   ${cfg.d?`<text class="dtxt" y="${cy-hr-8}" font-size="12" font-weight="800" fill="#5b6b7c">Ø${cfg.d}</text>`:''}
+   <circle cx="46" cy="46" r="26" fill="#fff" stroke="#34495e" stroke-width="5"/>
+   <g class="needle" style="transform-origin:46px 46px"><line x1="46" y1="46" x2="46" y2="26" stroke="#e5384f" stroke-width="3" stroke-linecap="round"/></g><circle cx="46" cy="46" r="4" fill="#34495e"/>
+   <text class="gt" x="46" y="90" text-anchor="middle" font-size="14" font-weight="800" fill="#34495e">${cfg.P?fmt(cfg.P)+' bar':'P = ?'}</text>
+   <text class="ban" x="330" y="292" text-anchor="middle" font-size="16" font-weight="800"></text>
+   <text class="r1" x="632" y="26" text-anchor="end" font-size="14" font-weight="800" fill="#5b7188"></text>
+   <text class="r2" x="632" y="46" text-anchor="end" font-size="14" font-weight="800" fill="#5b7188"></text>
+  </svg>`;
+  const g=s=>host.querySelector(s);
+  const rear=g('.rear'),front=g('.front'),pist=g('.pist'),rod=g('.rod'),ld=g('.ld'),ptc=g('.ptc'),nd=g('.needle'),ban=g('.ban');
+  const rp=g('.rp'),fp=g('.fp'),rt=g('.rt'),ft=g('.ft'),dtxt=g('.dtxt');
+  const ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+  function phase(t){
+    if(cfg.kind==='adv'){t%=4.4;if(t<2.4)return{p:ease(t/2.4),m:'a'};if(t<3.2)return{p:1,m:'a'};if(t<3.8)return{p:1-ease((t-3.2)/.6),m:'n'};return{p:0,m:'n'};}
+    if(cfg.kind==='ret'){t%=4.4;if(t<2.4)return{p:1-ease(t/2.4),m:'r'};if(t<3.2)return{p:0,m:'r'};if(t<3.8)return{p:ease((t-3.2)/.6),m:'n'};return{p:1,m:'n'};}
+    t%=6.2;if(t<2.4)return{p:ease(t/2.4),m:'a'};if(t<3.1)return{p:1,m:'a'};if(t<5.5)return{p:1-ease((t-3.1)/2.4),m:'r'};return{p:0,m:'r'};
+  }
+  const NA=24,NB=6,A=[],B=[];
+  const mkp=(arr,n,col)=>{for(let i=0;i<n;i++){const c=document.createElementNS(svgNS,'circle');c.setAttribute('r','3');c.setAttribute('fill',col);ptc.appendChild(c);arr.push({c,u:Math.random(),v:Math.random(),du:(Math.random()-.5)*1.2,dv:(Math.random()-.5)*1.2});}};
+  mkp(A,NA,'#0b5ea8');mkp(B,NB,'#8aa0b6');
+  let solved=false;
+  function place(arr,xa,xb,show){arr.forEach(p=>{p.u+=p.du*0.016;p.v+=p.dv*0.016;if(p.u<0||p.u>1){p.du*=-1;p.u=Math.min(1,Math.max(0,p.u));}if(p.v<0||p.v>1){p.dv*=-1;p.v=Math.min(1,Math.max(0,p.v));}
+    const w=xb-xa;let y=cy-hb+9+p.v*(2*hb-18);
+    if(w<10||!show){p.c.setAttribute('opacity','0');return;}
+    if(Math.abs(y-cy)<hr+4&&xa>x0+30)y=cy+(y>=cy?1:-1)*(hr+5);
+    p.c.setAttribute('opacity','.75');p.c.setAttribute('cx',(xa+4+p.u*(w-8)).toFixed(1));p.c.setAttribute('cy',y.toFixed(1));});}
+  const arrow=(el,x,y,pressurized,vis,t)=>{el.setAttribute('transform',`translate(${x} ${y+(pressurized?Math.sin(t*8)*3:-Math.sin(t*8)*3)}) ${pressurized?'':'rotate(180)'}`);
+    el.firstChild.setAttribute('fill',pressurized?'#0b5ea8':'#8aa0b6');el.setAttribute('opacity',vis?1:0);};
+  const S={
+    solve(){solved=true;
+      const a=cfg.ans,r1=g('.r1'),r2=g('.r2');r1.setAttribute('fill','#16a34a');r2.setAttribute('fill','#16a34a');
+      const lines=[];
+      if(a.Fa!=null)lines.push(`F avanço = ${fmt(a.Fa)} kgf`);if(a.Fr!=null)lines.push(`F retorno = ${fmt(a.Fr)} kgf`);
+      if(a.Pa!=null)lines.push(`P avanço = ${fmt(a.Pa)} bar`);if(a.Pr!=null)lines.push(`P retorno = ${fmt(a.Pr)} bar`);
+      r1.textContent=lines[0]||'';r2.textContent=lines[1]||'';
+      if(cfg.P==null){g('.gt').textContent=`${fmt(a.Pa)} bar`;}
+      ld.setAttribute('filter','');ld.firstChild.setAttribute('stroke','#16a34a');
+    },
+    update(t){
+      const ph=phase(t),xp=xpMin+ph.p*stroke,tip=xp+14+rodL;
+      const pr=ph.m==='a'?'rear':ph.m==='r'?'front':null;
+      rear.setAttribute('x',x0+4);rear.setAttribute('width',Math.max(0,xp-x0-4));
+      front.setAttribute('x',xp+14);front.setAttribute('width',Math.max(0,x1-4-xp-14));
+      rear.setAttribute('fill',pr==='rear'?'#6db3ff':'#eaf2fa');front.setAttribute('fill',pr==='front'?'#6db3ff':'#eaf2fa');
+      rear.setAttribute('opacity',pr==='rear'?.85:.6);front.setAttribute('opacity',pr==='front'?.85:.6);
+      pist.setAttribute('x',xp);rod.setAttribute('x',xp+14);rod.setAttribute('width',rodL);
+      ld.setAttribute('transform',`translate(${tip} 0)`);
+      if(dtxt)dtxt.setAttribute('x',x1+14+ (0));
+      const rX=[x0+4,xp],fX=[xp+14,x1-4],pa=pr==='front'?fX:rX,pb=pr==='front'?rX:fX;
+      place(A,pa[0],pa[1],pr!==null);place(B,pb[0],pb[1],true);
+      arrow(rp,x0+26,cy-hb-48,pr==='rear',pr!==null,t);arrow(fp,x1-26,cy-hb-48,pr==='front',pr!==null,t);
+      rt.textContent=pr==='rear'?'AR COMPRIMIDO':pr==='front'?'ESCAPE':'';rt.setAttribute('fill',pr==='rear'?'#0b5ea8':'#8aa0b6');
+      ft.textContent=pr==='front'?'AR COMPRIMIDO':pr==='rear'?'ESCAPE':'';ft.setAttribute('fill',pr==='front'?'#0b5ea8':'#8aa0b6');
+      ban.textContent=ph.m==='a'?'AVANÇO ▶  (empurrar)':ph.m==='r'?'◀  RETORNO (puxar)':'';ban.setAttribute('fill',ph.m==='a'?'#0b5ea8':'#e06a00');
+      const frac=cfg.P?Math.min(1,cfg.P/10):(solved?Math.min(1,cfg.ans.Pa/10):.4);
+      nd.style.transform=`rotate(${-70+140*(frac+(pr?0.03*Math.sin(t*6):0))}deg)`;
+    }
+  };
+  if(!cfg.ans||(cfg.ans.Fa==null&&cfg.ans.Fr==null&&cfg.ans.Pa==null)){}
+  cur=S;return S;
+}
+
+/* ================= CONFETE ================= */
+const cv=$('#confetti'),cx=cv.getContext('2d');let conf=[],confOn=false;
+function rs(){cv.width=innerWidth;cv.height=innerHeight}rs();addEventListener('resize',rs);
+function confetti(n){if(reduce)return;const cols=['#0b5ea8','#2f8cf0','#ff7a1a','#ffc14d','#16a34a','#e5384f'];
+  for(let i=0;i<n;i++)conf.push({x:innerWidth/2+(Math.random()-.5)*200,y:innerHeight*.35,vx:(Math.random()-.5)*14,vy:-Math.random()*13-3,
+    s:5+Math.random()*7,c:cols[i%cols.length],r:Math.random()*6,vr:(Math.random()-.5)*.4,l:140+Math.random()*60});
+  if(!confOn){confOn=true;(function f(){cx.clearRect(0,0,cv.width,cv.height);
+    conf=conf.filter(p=>p.l>0);conf.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.r+=p.vr;p.l--;
+      cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.globalAlpha=Math.min(1,p.l/40);cx.fillRect(-p.s/2,-p.s/3,p.s,p.s*.6);cx.restore();});
+    if(conf.length)requestAnimationFrame(f);else{confOn=false;cx.clearRect(0,0,cv.width,cv.height);}})();}}
+
+/* bolhas de fundo */
+(function(){if(reduce)return;const bg=$('#bg');for(let i=0;i<16;i++){const b=document.createElement('span');b.className='bub';
+  const s=8+Math.random()*26;b.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${12+Math.random()*16}s;animation-delay:${-Math.random()*20}s`;bg.appendChild(b);}})();
+
+/* ================= UI ================= */
+const app=$('#app');
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600);}
+function renderChrome(){
+  const lv=level(P.xp),nx=lv.n,pct=nx?Math.round((P.xp-lv.l[0])/(nx[0]-lv.l[0])*100):100;
+  $('#hud').innerHTML=`${P.name?`<span class="chip">👷 <b>${esc(P.name)}</b></span>`:''}
+   <span class="chip">🏅 <b>${lv.l[1]}</b></span><span class="chip">✨ <b>${P.xp}</b> XP<span class="xpbar"><i style="width:${pct}%"></i></span></span>`;
+  const t=(s,txt)=>{const open=s===1||stage2Open(),act=P.ui.stage===s&&P.ui.view!=='welcome'&&P.ui.view!=='final';
+    return `<button class="tab ${act?'active':''} ${open?'':'locked'} ${stageDone(s)?'done':''}" data-stage="${s}">${open?'':'🔒 '}${txt}</button>`};
+  $('#tabs').innerHTML=t(1,'Etapa 1 · Princípio de Pascal')+t(2,'Etapa 2 · Avanço e Retorno');
+  $('#tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{const s=+b.dataset.stage;
+    if(s===2&&!stage2Open()){b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');toast('🔒 Conclua toda a Etapa 1 (incluindo o projeto) para liberar a Etapa 2.');return;}
+    if(!P.name&&P.ui.view==='welcome'){toast('Digite seu nome para começar.');return;}
+    enterStage(s);});
+}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function enterStage(s){P.ui.stage=s;if(!P.seen[s]){P.ui.view='intro';}else{P.ui.view='q';P.ui.idx=Math.min(P.ui.idx,firstUndone(s));if(P.ui.stage!==s||true)P.ui.idx=firstUndone(s);}save();render();}
+function render(){cur=null;renderChrome();({welcome:vWelcome,intro:vIntro,q:vQuestion,final:vFinal})[P.ui.view]();window.scrollTo({top:0,behavior:'smooth'});}
+
+function vWelcome(){
+  const has=Object.keys(P.done).length>0;
+  app.innerHTML=`<section class="card hero"><div style="font-size:60px">💨🏭</div>
+   <h2>Princípio de Pascal</h2>
+   <p>Entre na pele de um técnico de manutenção e aprenda como o <b>ar comprimido</b> transmite força: do <b>Princípio de Pascal</b> até a <b>força de avanço e de retorno</b> dos cilindros pneumáticos.</p>
+   <div class="scene" id="scene" style="max-width:640px;margin:14px auto;position:static"></div>
+   <div class="namebox"><input type="text" id="name" maxlength="28" placeholder="Digite seu nome" value="${esc(P.name)}" autocomplete="off">
+   <button class="btn primary" id="go">${has?'▶ Continuar a missão':'🚀 Começar a missão'}</button>${has?'<button class="btn ghost" id="reset">↺ Recomeçar</button>':''}</div>
+   <p style="font-size:14px">2 etapas · 8 exercícios + 1 projeto desafiador em cada · A Etapa 2 só abre quando a Etapa 1 estiver completa.</p></section>`;
+  Scene1($('#scene'),{A1:1,A2:10,F1:10,F2:100,P:10,load:'🚗',unk:[]}).solve({F1:10,F2:100,A1:1,A2:10,P:10});
+  $('#go').onclick=()=>{const n=$('#name').value.trim();if(!n){toast('Digite seu nome para começar.');$('#name').focus();return;}
+    P.name=n;P.ui.stage=(stage2Open()&&P.seen[2])?2:1;enterStageFrom();};
+  $('#name').onkeydown=e=>{if(e.key==='Enter')$('#go').click()};
+  const rs=$('#reset');if(rs)rs.onclick=()=>{if(rs.dataset.c){P={name:P.name,xp:0,done:{},ui:{stage:1,idx:0,view:'welcome'},seen:{1:false,2:false}};save();render();}else{rs.dataset.c=1;rs.textContent='Clique de novo para apagar o progresso';}};
+}
+function enterStageFrom(){const s=P.ui.stage;if(stageDone(1)&&stageDone(2)){P.ui.view='final';save();render();return;}
+  const st=stageDone(1)?2:1;P.ui.stage=st;enterStage(st);}
+
+function vIntro(){
+  const s=P.ui.stage;
+  const f=s===1?`<div class="formulas"><div class="fcard"><small>Pressão</small><div class="f">P = F ÷ A</div><small>kgf/cm² = kgf ÷ cm²</small></div>
+     <div class="fcard"><small>Força</small><div class="f">F = P × A</div><small>kgf = kgf/cm² × cm²</small></div>
+     <div class="fcard"><small>Área</small><div class="f">A = F ÷ P</div><small>cm² = kgf ÷ kgf/cm²</small></div></div>`
+   :`<div class="formulas"><div class="fcard"><small>Área do êmbolo (avanço)</small><div class="f">A₁ = π·D² ÷ 4</div></div>
+     <div class="fcard"><small>Área da coroa (retorno)</small><div class="f">A₂ = π·(D² − d²) ÷ 4</div></div>
+     <div class="fcard"><small>Força</small><div class="f">F = P × A</div></div>
+     <div class="fcard"><small>Unidades</small><div class="f" style="font-size:17px">1 atm ≈ 1 bar ≈ 1 kgf/cm²<br>10 mm = 1 cm</div></div></div>`;
+  app.innerHTML=`<section class="card intro"><div class="intro-grid"><div>
+    <span class="badge">Missão ${s} de 2</span>
+    <h2>${s===1?'Pascal em ação com ar comprimido':'Cilindros pneumáticos: empurrar e puxar'}</h2>
+    <p class="stmt">${s===1?'A pressão aplicada ao ar confinado se distribui <b>igualmente</b> para todas as partes. Por isso uma força pequena num êmbolo pequeno gera uma força grande num êmbolo grande. Em cada exercício, descubra <b>a variável que falta</b>.'
+      :'No <b>avanço</b>, o ar age sobre a área inteira do êmbolo. No <b>retorno</b>, a haste ocupa espaço e o ar age só na área da coroa. Calcule as forças (ou a pressão necessária) dos cilindros de situações reais da indústria.'}</p>
+    ${f}
+    <p class="stmt">Em cada exercício você tem um botão de <b>💡 Dica</b>. Se errar, o jogo só avisa que <b>algo está errado</b>: revise os cálculos! Menos dicas e menos erros = mais estrelas.</p>
+    <button class="btn primary" id="start">▶ Iniciar Etapa ${s}</button></div>
+    <div class="scene" id="scene" style="position:static"></div></div></section>`;
+  if(s===1)Scene1($('#scene'),{A1:1,A2:10,F1:10,F2:100,P:10,load:'🚗',unk:[]}).solve({F1:10,F2:100,A1:1,A2:10,P:10});
+  else{const sc=Scene2($('#scene'),{kind:'both',D:50,d:20,P:6,F:null,load:'📦',A1:area1(50),A2:area2(50,20),ans:{Fa:6*area1(50),Fr:6*area2(50,20)}});}
+  $('#start').onclick=()=>{P.seen[s]=true;P.ui.view='q';P.ui.idx=firstUndone(s);save();render();};
+}
+
+function vQuestion(){
+  const s=P.ui.stage,qs=QS[s],idx=Math.min(P.ui.idx,qs.length-1),q=qs[idx],fu=firstUndone(s);
+  P.ui.idx=idx;const already=!!P.done[q.id];
+  R={hints:0,errors:0,solved:already};
+  const dots=qs.map((x,i)=>{const d=P.done[x.id],lock=!d&&i>fu;
+    return `<div class="dot ${x.project?'trophy':''} ${d?'done':''} ${i===idx?'cur':''} ${lock?'lock':''}" data-i="${i}" title="${x.project?'Projeto desafiador':'Exercício '+(i+1)}">${x.project?'🏆':i+1}</div>`}).join('');
+  let body='';
+  if(q.stage===1&&q.boxes){
+    body+=`<div class="vars">${q.boxes.map(b=>b.unk?`<div class="vbox unk"><label>${b.lab} · <b>calcule</b></label><div class="inrow"><input class="num" id="f_${b.key}" inputmode="decimal" autocomplete="off" placeholder="?"><span class="unit">${b.un}</span></div></div>`
+      :`<div class="vbox locked"><label>${b.lab}</label><div class="val">${fmt(b.val)} <small>${b.un}</small></div></div>`).join('')}</div>
+      <div class="fld"><label>${q.pfield.label}</label><div class="inrow"><input class="num" id="f_P" inputmode="decimal" autocomplete="off" placeholder="?"><span class="unit">${q.pfield.unit}</span></div></div>`;
+  }else{
+    body+=q.fields.map(f=>`<div class="fld"><label>${f.label}</label><div class="inrow"><input class="num" id="f_${f.key}" inputmode="decimal" autocomplete="off" placeholder="?"><span class="unit">${f.unit}</span></div></div>`).join('');
+  }
+  const chips=q.chips?`<div class="chips">${q.chips.map(c=>`<span>${c}</span>`).join('')}</div>`:'';
+  const last=idx===qs.length-1;
+  app.innerHTML=`<section>
+   <div class="stepper">${dots}</div>
+   <article class="card" id="qc"><div class="qhead"><span class="badge ${q.project?'proj':''}">${q.project?'🏆 Projeto desafiador':`Etapa ${s} · Exercício ${idx+1}/8`}</span>
+     <h2>${q.icon} ${q.title}</h2><span class="qstars" id="qstars">${already?stars(P.done[q.id].stars):''}</span></div>
+   <div class="qgrid"><div class="scene" id="scene"></div>
+    <div><p class="stmt">${q.text}</p>${chips}${body}
+     <div class="actions"><button class="btn hint" id="bh">💡 Dica (0/3)</button><button class="btn primary" id="bv">✅ Validar</button></div>
+     <div class="fb" id="fb" aria-live="polite"></div><div class="hints" id="hs"></div><div id="solbox"></div>
+     <div class="actions"><button class="btn ok pulse" id="bn" hidden>${last?(s===1?'🔓 Concluir Etapa 1':'🏁 Concluir Etapa 2'):'Próximo ▶'}</button></div>
+    </div></div></article></section>`;
+  const sc=q.stage===1?Scene1($('#scene'),q.scene):Scene2($('#scene'),q.scene);
+  app.querySelectorAll('.dot').forEach(d=>d.onclick=()=>{const i=+d.dataset.i;if(i>fu&&!P.done[qs[i].id]){toast('Conclua o exercício atual para avançar.');return;}P.ui.idx=i;save();render();});
+  const inputs=[...app.querySelectorAll('input.num')];
+  inputs.forEach(i=>i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('#bv').click();}});
+  const bh=$('#bh'),bv=$('#bv'),bn=$('#bn');
+  const showSolved=(fromLoad)=>{
+    R.solved=true;inputs.forEach(i=>{i.classList.add('ok');i.readOnly=true;});bv.disabled=true;bh.disabled=true;bn.hidden=false;
+    $('#solbox').innerHTML=`<div class="sol"><h4>✔ Resolução</h4>${q.sol.map(l=>`<p>${l}</p>`).join('')}</div>`;
+    if(q.stage===1)sc.solve(q.scene);else sc.solve();
+    $('#fb').className='fb good';$('#fb').textContent='🎉 Correto! Sistema validado.';
+  };
+  if(already){q.fields.forEach(f=>{const el=$('#f_'+f.key);if(el)el.value=fmt(f.ans,2);});showSolved(true);}
+  bh.onclick=()=>{if(R.hints>=3)return;const h=q.hints[R.hints++];
+    $('#hs').insertAdjacentHTML('beforeend',`<div class="hbub">💡 <b>Dica ${R.hints}:</b> ${h}</div>`);
+    bh.textContent=R.hints>=3?'💡 Sem mais dicas':`💡 Dica (${R.hints}/3)`;if(R.hints>=3)bh.disabled=true;};
+  bv.onclick=()=>{
+    const vals=q.fields.map(f=>parseNum($('#f_'+f.key).value));
+    const fb=$('#fb');
+    if(vals.some(v=>isNaN(v))){fb.className='fb bad';fb.textContent='✏️ Preencha todos os campos antes de validar.';return;}
+    if(q.fields.every((f,i)=>close(vals[i],f.ans))){
+      const k=q.base/100,pts=Math.max(Math.round(q.base*.2),Math.round(q.base-R.hints*15*k-R.errors*5*k)),pct=pts/q.base,st=pct>=.85?3:pct>=.6?2:1;
+      if(!P.done[q.id]){P.done[q.id]={pts,stars:st};P.xp+=pts;save();}
+      showSolved();
+      $('#qstars').textContent=stars(st);
+      $('#solbox').insertAdjacentHTML('beforeend',`<div class="gain"><span class="xp">+${pts} XP</span><span>${stars(st)}</span></div>`);
+      renderChrome();confetti(q.project?220:70);
+    }else{
+      R.errors++;fb.className='fb bad';fb.textContent='❌ Algo está errado. Revise seus cálculos e tente de novo!';
+      const c=$('#qc');c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake');
+    }};
+  bn.onclick=()=>{
+    if(!last){P.ui.idx=idx+1;save();render();return;}
+    if(s===1){modalStage1();}else{P.ui.view='final';save();render();confetti(300);}
+  };
+  const f0=$('input.num:not([readonly])');if(f0&&!already&&innerWidth>900)f0.focus();
+}
+function modalStage1(){
+  const o=document.createElement('div');o.className='overlay';
+  o.innerHTML=`<div class="modal"><div class="big">🔓</div><h3>Etapa 1 completa!</h3><p>Você dominou o Princípio de Pascal. A <b>Etapa 2 — Avanço e Retorno</b> de cilindros pneumáticos está liberada!</p><button class="btn primary" id="m">Ir para a Etapa 2 ▶</button></div>`;
+  document.body.appendChild(o);confetti(320);
+  const tab=$('#tabs .tab[data-stage="2"]');renderChrome();
+  const t2=$('#tabs .tab[data-stage="2"]');if(t2)t2.classList.add('pop');
+  $('#m').onclick=()=>{o.remove();P.ui.stage=2;P.ui.idx=0;P.ui.view=P.seen[2]?'q':'intro';save();render();};
+}
+function vFinal(){
+  const lv=level(P.xp).l[1];
+  const rows=[1,2].map(s=>{const qs=QS[s],pts=qs.reduce((a,q)=>a+(P.done[q.id]?P.done[q.id].pts:0),0),st=qs.reduce((a,q)=>a+(P.done[q.id]?P.done[q.id].stars:0),0);
+    return `<tr><td>Etapa ${s} — ${s===1?'Princípio de Pascal':'Avanço e Retorno'}</td><td>${pts} XP · ${st}⭐</td></tr>`}).join('');
+  app.innerHTML=`<section class="card hero final"><div class="trophy">🏆</div><h2>Missão cumprida, ${esc(P.name||'técnico')}!</h2>
+   <div class="cert"><p style="margin:0;color:var(--muted);font-weight:700">Certificado de conclusão</p><h3 style="margin:6px 0;font-size:26px">Princípio de Pascal · Pneumática</h3>
+   <p style="margin:4px 0">Nível alcançado: <b>${lv}</b></p><p style="margin:4px 0;font-size:22px"><b>${P.xp} XP</b></p>
+   <table class="sumtable">${rows}</table></div>
+   <div class="actions noprint" style="justify-content:center"><button class="btn primary" id="pr">🖨️ Imprimir / salvar PDF</button><button class="btn ghost" id="rv">↺ Rever exercícios</button></div>
+   <p class="noprint" style="font-size:14px">Dica: tire um print desta tela e mostre ao professor!</p></section>`;
+  $('#pr').onclick=()=>window.print();
+  $('#rv').onclick=()=>{P.ui.stage=1;P.ui.idx=0;P.ui.view='q';save();render();};
+  confetti(200);
+}
+
+load();
+if(P.ui.view==='q'||P.ui.view==='intro'||P.ui.view==='final'){if(!P.name)P.ui.view='welcome';}
+else P.ui.view='welcome';
+render();
+window.__pascal={P:()=>P,Q1,Q2,close,parseNum};
+})();
+</script>
+</body>
+</html>
